@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAP — Teste de Arquétipos Pessoais</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Josefin+Sans:wght@200;300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A96E; --gold-light: #E8D5A3;
+    --black: #0A0A0A; --dark: #111111; --dark2: #1A1A1A;
+    --white: #F5F0E8; --white2: #EDE6D6;
+    --gray: #888880; --gray2: #555550;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--black); color:var(--white); font-family:'Josefin Sans',sans-serif; font-weight:300; line-height:1.7; overflow-x:hidden; }
+  .screen { display:none; }
+  .screen.active { display:block; }
+  .ornament { display:flex; align-items:center; gap:16px; justify-content:center; margin:16px 0; }
+  .ornament-line { flex:1; max-width:80px; height:1px; background:linear-gradient(to right,transparent,var(--gold)); }
+  .ornament-line.rev { background:linear-gradient(to left,transparent,var(--gold)); }
+  .ornament-diamond { width:6px; height:6px; background:var(--gold); transform:rotate(45deg); }
+
+  /* PASSWORD */
+  #password-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; background:radial-gradient(ellipse 50% 40% at 50% 50%,rgba(201,169,110,0.08) 0%,transparent 70%),var(--black); }
+  .password-box { max-width:420px; width:100%; border:1px solid rgba(201,169,110,0.3); padding:60px 48px; text-align:center; background:rgba(201,169,110,0.02); animation:fadeUp 0.6s ease both; }
+  .tap-logo { font-family:'Cormorant Garamond',serif; font-size:52px; font-weight:300; color:var(--gold); margin-bottom:4px; }
+  .tap-full { font-size:11px; letter-spacing:0.3em; color:var(--gray); margin-bottom:48px; text-transform:uppercase; display:block; }
+  .input-group { margin-bottom:24px; text-align:left; }
+  .input-group label { display:block; font-size:11px; letter-spacing:0.25em; color:var(--gold); margin-bottom:10px; text-transform:uppercase; }
+  .input-group input { width:100%; background:transparent; border:1px solid rgba(201,169,110,0.3); color:var(--white); font-family:'Josefin Sans',sans-serif; font-size:16px; padding:16px 18px; outline:none; letter-spacing:0.2em; transition:border-color 0.3s; }
+  .input-group input:focus { border-color:var(--gold); }
+  .error-msg { color:#C97070; font-size:13px; letter-spacing:0.1em; margin-bottom:16px; display:none; }
+  .btn-primary { display:inline-block; background:transparent; border:1px solid var(--gold); color:var(--gold); font-family:'Josefin Sans',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.3em; text-transform:uppercase; padding:18px 48px; cursor:pointer; text-decoration:none; transition:all 0.3s ease; position:relative; overflow:hidden; width:100%; }
+  .btn-primary::before { content:''; position:absolute; inset:0; background:var(--gold); transform:translateX(-101%); transition:transform 0.3s ease; }
+  .btn-primary:hover { color:var(--black); }
+  .btn-primary:hover::before { transform:translateX(0); }
+  .btn-primary span { position:relative; z-index:1; }
+
+  /* TEST SCREEN */
+  #test-screen { min-height:100vh; padding:0 0 100px; background:var(--black); }
+
+  /* HERO HEADER */
+  .test-hero { text-align:center; padding:56px 24px 40px; position:relative; background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(201,169,110,0.10) 0%,transparent 70%); border-bottom:1px solid rgba(201,169,110,0.1); margin-bottom:48px; }
+  .test-hero::before { content:''; position:absolute; inset:0; background-image:repeating-linear-gradient(0deg,transparent,transparent 79px,rgba(201,169,110,0.03) 79px,rgba(201,169,110,0.03) 80px),repeating-linear-gradient(90deg,transparent,transparent 79px,rgba(201,169,110,0.03) 79px,rgba(201,169,110,0.03) 80px); pointer-events:none; }
+  .test-badge { font-size:11px; font-weight:600; letter-spacing:0.35em; color:var(--gold); text-transform:uppercase; border:1px solid rgba(201,169,110,0.3); padding:7px 18px; display:inline-block; margin-bottom:28px; position:relative; }
+  .test-hero-title { font-family:'Cormorant Garamond',serif; font-size:clamp(36px,6vw,64px); font-weight:300; line-height:1.05; margin-bottom:6px; position:relative; }
+  .test-hero-title span { font-style:italic; color:var(--gold); }
+  .test-hero-sub { font-size:12px; font-weight:200; letter-spacing:0.3em; color:var(--gray); text-transform:uppercase; position:relative; }
+
+  /* PROGRESS */
+  .progress-bar-wrap { max-width:720px; margin:0 auto 48px; padding:0 24px; }
+  .progress-info { display:flex; justify-content:space-between; font-size:11px; letter-spacing:0.2em; color:var(--gray); margin-bottom:10px; text-transform:uppercase; }
+  .progress-track { height:1px; background:rgba(201,169,110,0.15); position:relative; }
+  .progress-fill { height:100%; background:var(--gold); transition:width 0.4s ease; position:relative; }
+  .progress-fill::after { content:''; position:absolute; right:-3px; top:-3px; width:7px; height:7px; background:var(--gold); transform:rotate(45deg); }
+
+  /* QUESTIONS */
+  .question-block { max-width:720px; margin:0 auto; display:none; padding:0 24px; }
+  .question-block.active { display:block; animation:fadeUp 0.4s ease; }
+  .question-number { font-size:11px; letter-spacing:0.35em; color:var(--gold); text-transform:uppercase; margin-bottom:20px; display:block; }
+  .question-text { font-family:'Cormorant Garamond',serif; font-size:clamp(24px,3.5vw,34px); font-weight:300; line-height:1.3; margin-bottom:40px; color:var(--white); }
+  .options { display:flex; flex-direction:column; gap:14px; }
+  .option { display:flex; align-items:flex-start; gap:20px; padding:22px 26px; border:1px solid rgba(201,169,110,0.15); cursor:pointer; transition:all 0.25s ease; background:transparent; text-align:left; }
+  .option:hover { border-color:rgba(201,169,110,0.5); background:rgba(201,169,110,0.04); }
+  .option.selected { border-color:var(--gold); background:rgba(201,169,110,0.08); }
+  .option-letter { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:300; color:var(--gold); flex-shrink:0; width:26px; line-height:1.5; }
+  .option-text { font-size:16px; color:var(--white2); line-height:1.7; }
+
+  /* NAV */
+  .nav-buttons { max-width:720px; margin:48px auto 0; display:flex; justify-content:space-between; align-items:center; padding:0 24px; }
+  .btn-nav { background:transparent; border:1px solid rgba(201,169,110,0.3); color:var(--gold); font-family:'Josefin Sans',sans-serif; font-size:11px; letter-spacing:0.3em; text-transform:uppercase; padding:16px 36px; cursor:pointer; transition:all 0.3s ease; }
+  .btn-nav:hover { border-color:var(--gold); background:rgba(201,169,110,0.06); }
+  .btn-nav:disabled { opacity:0.25; cursor:default; }
+  .btn-nav:disabled:hover { background:transparent; border-color:rgba(201,169,110,0.3); }
+  .btn-submit { background:var(--gold); border:1px solid var(--gold); color:var(--black); font-family:'Josefin Sans',sans-serif; font-size:11px; letter-spacing:0.3em; text-transform:uppercase; padding:16px 40px; cursor:pointer; transition:all 0.3s ease; display:none; font-weight:600; }
+  .btn-submit:hover { background:var(--gold-light); }
+
+  /* RESULT */
+  #result-screen { min-height:100vh; padding:80px 24px 100px; background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(201,169,110,0.1) 0%,transparent 65%),var(--black); }
+  .result-header { max-width:820px; margin:0 auto 80px; text-align:center; }
+  .result-label { font-size:11px; letter-spacing:0.4em; color:var(--gold); text-transform:uppercase; display:block; margin-bottom:16px; }
+  .result-archetype-name { font-family:'Cormorant Garamond',serif; font-size:clamp(48px,10vw,100px); font-weight:300; line-height:1; margin-bottom:12px; }
+  .result-archetype-title { font-family:'Cormorant Garamond',serif; font-size:clamp(18px,3vw,24px); font-style:italic; color:var(--gold); margin-bottom:40px; }
+  .result-description { font-size:17px; color:var(--white2); line-height:1.85; max-width:640px; margin:0 auto; }
+  .moodboard { max-width:820px; margin:0 auto; }
+  .moodboard-title { font-size:11px; letter-spacing:0.4em; text-transform:uppercase; color:var(--gold); text-align:center; margin-bottom:48px; }
+  .moodboard-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1px; background:rgba(201,169,110,0.08); margin-bottom:1px; }
+  .moodboard-card { background:var(--dark); padding:40px 36px; }
+  .moodboard-card-label { font-size:10px; letter-spacing:0.4em; text-transform:uppercase; color:var(--gold); margin-bottom:16px; display:block; }
+  .moodboard-card h3 { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:400; color:var(--white); margin-bottom:14px; }
+  .moodboard-card p { font-size:15px; color:var(--gray); line-height:1.75; }
+  .color-palette { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .color-chip { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .color-swatch { width:40px; height:40px; border:1px solid rgba(255,255,255,0.1); }
+  .color-name { font-size:10px; color:var(--gray2); letter-spacing:0.05em; text-align:center; max-width:48px; line-height:1.3; }
+  .essence-tag { display:inline-block; border:1px solid rgba(201,169,110,0.3); color:var(--gold); font-size:11px; letter-spacing:0.2em; padding:7px 16px; margin:4px 4px 4px 0; text-transform:uppercase; }
+  .result-footer { max-width:820px; margin:80px auto 0; text-align:center; }
+  .result-footer p { font-family:'Cormorant Garamond',serif; font-size:22px; font-style:italic; color:var(--gray); margin-bottom:40px; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  @media(max-width:600px){ .password-box{padding:48px 28px;} .option-text{font-size:15px;} }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD -->
+<div id="password-screen" class="screen active">
+  <div class="password-box">
+    <div class="tap-logo">TAP</div>
+    <span class="tap-full">Teste de Arquétipos Pessoais</span>
+    <div class="ornament"><div class="ornament-line rev"></div><div class="ornament-diamond"></div><div class="ornament-line"></div></div>
+    <br>
+    <div class="input-group">
+      <label>Senha de acesso</label>
+      <input type="password" id="pwd-input" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter') checkPassword()">
+    </div>
+    <p class="error-msg" id="pwd-error">Senha incorreta. Verifique seu e-mail.</p>
+    <button class="btn-primary" onclick="checkPassword()"><span>Acessar o teste</span></button>
+    <br><br>
+    <p style="font-size:12px;color:var(--gray);letter-spacing:0.05em;">Sua senha foi enviada por e-mail após a compra.</p>
+  </div>
+</div>
+
+<!-- TEST -->
+<div id="test-screen" class="screen">
+  <div class="test-hero">
+    <span class="test-badge">Teste de Arquétipos Pessoais</span>
+    <h1 class="test-hero-title">Conheça seu<br><span>arquétipo</span></h1>
+    <p class="test-hero-sub">TAP — A sua essência revelada</p>
+    <div class="ornament" style="margin-top:20px;"><div class="ornament-line rev"></div><div class="ornament-diamond"></div><div class="ornament-line"></div></div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-info"><span>Progresso</span><span id="progress-text">1 / 12</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:8.33%"></div></div>
+  </div>
+  <div id="questions-container"></div>
+  <div class="nav-buttons">
+    <button class="btn-nav" id="btn-prev" onclick="prevQuestion()" disabled>← Anterior</button>
+    <button class="btn-nav" id="btn-next" onclick="nextQuestion()">Próxima →</button>
+    <button class="btn-submit" id="btn-submit" onclick="submitTest()">Ver meu resultado →</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-screen" class="screen">
+  <div class="result-header">
+    <span class="result-label">Seu arquétipo dominante</span>
+    <h1 class="result-archetype-name" id="result-name"></h1>
+    <p class="result-archetype-title" id="result-title"></p>
+    <div class="ornament"><div class="ornament-line rev"></div><div class="ornament-diamond"></div><div class="ornament-line"></div></div>
+    <br>
+    <p class="result-description" id="result-description"></p>
+  </div>
+  <div class="moodboard">
+    <p class="moodboard-title">✦ &nbsp; Seu moodboard pessoal &nbsp; ✦</p>
+    <div class="moodboard-grid">
+      <div class="moodboard-card"><span class="moodboard-card-label">Paleta de cores</span><h3>Suas cores</h3><div class="color-palette" id="result-colors"></div><p id="result-colors-text" style="margin-top:12px;"></p></div>
+      <div class="moodboard-card"><span class="moodboard-card-label">Estilo pessoal</span><h3>Seu estilo</h3><p id="result-style"></p></div>
+      <div class="moodboard-card"><span class="moodboard-card-label">Detalhes & acessórios</span><h3>Seus acessórios</h3><p id="result-accessories"></p></div>
+      <div class="moodboard-card"><span class="moodboard-card-label">Essência</span><h3>Palavras-chave</h3><div id="result-essence"></div></div>
+    </div>
+  </div>
+  <div class="result-footer">
+    <div class="ornament" style="margin-top:60px;"><div class="ornament-line rev"></div><div class="ornament-diamond"></div><div class="ornament-line"></div></div>
+    <br>
+    <p>"Conhecer a si mesmo é o princípio de toda sabedoria."</p>
+    <p style="font-size:13px;color:var(--gray2);letter-spacing:0.1em;font-family:'Josefin Sans',sans-serif;font-style:normal;margin-top:-24px;">— Carl Gustav Jung</p>
+  </div>
+</div>
+
+<script>
+const SENHA_CORRETA = "TAP12";
+
+const questions = [
+  { text:"Diante de uma grande decisão na sua vida, você tende a:", options:[{letter:"A",text:"Confiar que tudo vai dar certo e seguir o coração",archetype:"INO"},{letter:"B",text:"Pesquisar novas possibilidades e sair da zona de conforto",archetype:"EXP"},{letter:"C",text:"Analisar cuidadosamente todos os dados antes de agir",archetype:"SAB"},{letter:"D",text:"Enfrentar o desafio de frente com determinação",archetype:"HER"}]},
+  { text:"Quando algo no mundo não está certo, você:", options:[{letter:"A",text:"Questiona as regras e pensa em maneiras de mudar o sistema",archetype:"REV"},{letter:"B",text:"Acredita que pode transformar a situação usando sua visão e influência",archetype:"MAG"},{letter:"C",text:"Prefere encontrar soluções práticas que funcionem para a maioria",archetype:"COM"},{letter:"D",text:"Busca criar conexões profundas e inspirar os outros através do exemplo",archetype:"AMA"}]},
+  { text:"No seu tempo livre, você se sente mais realizado quando:", options:[{letter:"A",text:"Está entre amigos, rindo e aproveitando o momento com leveza",archetype:"BOB"},{letter:"B",text:"Está cuidando de alguém ou contribuindo para o bem-estar das pessoas",archetype:"CUI"},{letter:"C",text:"Está criando algo novo — escrevendo, desenhando, construindo",archetype:"CRI"},{letter:"D",text:"Está organizando, planejando e tomando decisões importantes",archetype:"GOV"}]},
+  { text:"As pessoas costumam te descrever como:", options:[{letter:"A",text:"Gentil, otimista e de fácil convivência",archetype:"INO"},{letter:"B",text:"Curioso, independente e cheio de energia vital",archetype:"EXP"},{letter:"C",text:"Inteligente, reflexivo e alguém em quem se pode confiar",archetype:"SAB"},{letter:"D",text:"Corajoso, determinado e naturalmente inspirador",archetype:"HER"}]},
+  { text:"Em relação às normas e convenções sociais, você:", options:[{letter:"A",text:"Questiona tudo que não faz sentido e não tem medo de ser diferente",archetype:"REV"},{letter:"B",text:"Enxerga padrões onde outros não veem e usa isso a seu favor",archetype:"MAG"},{letter:"C",text:"Valoriza a tradição e prefere o que foi testado e aprovado",archetype:"COM"},{letter:"D",text:"Se entrega intensamente ao que ama e ao que acredita com paixão",archetype:"AMA"}]},
+  { text:"Quando está em um grupo, seu papel natural costuma ser:", options:[{letter:"A",text:"Aliviar a tensão e trazer leveza, humor e espontaneidade",archetype:"BOB"},{letter:"B",text:"Apoiar, acolher e garantir que todos estejam bem",archetype:"CUI"},{letter:"C",text:"Trazer ideias originais e soluções criativas inesperadas",archetype:"CRI"},{letter:"D",text:"Liderar, organizar e garantir que as coisas realmente aconteçam",archetype:"GOV"}]},
+  { text:"O que mais te motiva na vida é:", options:[{letter:"A",text:"A sensação de paz, segurança e harmonia interior",archetype:"INO"},{letter:"B",text:"A liberdade de explorar e viver novas experiências constantemente",archetype:"EXP"},{letter:"C",text:"O aprendizado contínuo e a busca incansável pela verdade",archetype:"SAB"},{letter:"D",text:"Superar seus limites e conquistar grandes objetivos",archetype:"HER"}]},
+  { text:"Em relação ao poder e às estruturas de controle, você:", options:[{letter:"A",text:"Resiste naturalmente ao que sente como opressivo ou injusto",archetype:"REV"},{letter:"B",text:"Sabe usar sua influência para catalisar mudanças profundas",archetype:"MAG"},{letter:"C",text:"Prefere ambientes equilibrados, sem extremos ou excessos",archetype:"COM"},{letter:"D",text:"Se dedica completamente às pessoas e causas que ama",archetype:"AMA"}]},
+  { text:"A forma como você prefere se expressar para o mundo é:", options:[{letter:"A",text:"Através do humor, da leveza e de momentos verdadeiramente memoráveis",archetype:"BOB"},{letter:"B",text:"Através do cuidado genuíno e da presença constante e atenta",archetype:"CUI"},{letter:"C",text:"Através da arte, escrita ou qualquer forma de criação original",archetype:"CRI"},{letter:"D",text:"Através de resultados concretos e da sua capacidade de liderança",archetype:"GOV"}]},
+  { text:"Quando pensa no futuro, você imagina:", options:[{letter:"A",text:"Um mundo mais simples, bonito e cheio de possibilidades puras",archetype:"INO"},{letter:"B",text:"Aventuras, descobertas e horizontes ainda não explorados",archetype:"EXP"},{letter:"C",text:"Um legado de conhecimento e sabedoria a ser transmitido",archetype:"SAB"},{letter:"D",text:"Conquistas que comprovem sua força e determinação",archetype:"HER"}]},
+  { text:"O que mais incomoda você no mundo atual é:", options:[{letter:"A",text:"A falta de autenticidade e a obediência cega às regras sem sentido",archetype:"REV"},{letter:"B",text:"A superficialidade e a falta de profundidade nas relações humanas",archetype:"MAG"},{letter:"C",text:"A desconexão entre as pessoas e a falta de senso de comunidade",archetype:"COM"},{letter:"D",text:"A frieza e a ausência de paixão e beleza nas relações",archetype:"AMA"}]},
+  { text:"Qual destas frases ressoa mais profundamente com você:", options:[{letter:"A",text:"\"A vida é muito curta para ser levada a sério o tempo todo\"",archetype:"BOB"},{letter:"B",text:"\"O maior ato de amor é colocar o outro antes de si mesmo\"",archetype:"CUI"},{letter:"C",text:"\"Criar é a forma mais pura e honesta de existir\"",archetype:"CRI"},{letter:"D",text:"\"Com poder vem responsabilidade — e com responsabilidade, legado\"",archetype:"GOV"}]}
+];
+
+const archetypes = {
+  INO:{name:"O Inocente",title:"Pureza, esperança e fé no bem",description:"Você carrega uma luz natural que poucos possuem: a capacidade de enxergar o mundo com frescor e otimismo genuíno, independente do que já viveu. O Inocente não é ingênuo — é alguém que escolhe conscientemente a esperança. Você acredita no bem das pessoas, valoriza a simplicidade e tem o dom de transmitir calma e segurança ao seu redor. Sua maior força está na autenticidade e na leveza que contagia.",colors:[{name:"Pérola",hex:"#F0EAD6"},{name:"Rosa Névoa",hex:"#E8D5C4"},{name:"Azul Céu",hex:"#B8D4E3"},{name:"Verde Menta",hex:"#B8D9C8"},{name:"Dourado Pálido",hex:"#E8D5A3"}],colorsText:"Tons suaves e luminosos que transmitem leveza, frescor e autenticidade natural.",style:"Romântico e delicado. Peças com caimento fluido em tecidos naturais como linho e voal. Estampas florais sutis, rendas delicadas e bordados artesanais. Silhuetas suaves que não aprisionam.",accessories:"Joias delicadas em ouro fino ou prata, com pedras suaves como quartzo rosa e água-marinha. Lenços de seda leve, bolsas em palha ou couro clarinho. Sapatos baixos de couro natural.",essence:["Puro","Esperançoso","Autêntico","Gentil","Luminoso"]},
+  EXP:{name:"O Explorador",title:"Liberdade, aventura e descoberta constante",description:"Você foi feito para o movimento. A rotina o sufoca; o horizonte desconhecido o desperta. O Explorador tem um apetite genuíno por experiências novas, lugares nunca vistos e ideias ainda não testadas. Você valoriza a liberdade acima de quase tudo e possui uma capacidade natural de se adaptar, reinventar e encontrar o novo dentro do cotidiano.",colors:[{name:"Caramelo",hex:"#C9956C"},{name:"Cáqui",hex:"#C3B99A"},{name:"Verde Oliva",hex:"#6B7C45"},{name:"Terra",hex:"#8B6347"},{name:"Laranja Queimado",hex:"#C86B3A"}],colorsText:"Tons terrosos e orgânicos que evocam natureza, movimento e autenticidade sem esforço.",style:"Funcional com personalidade marcante. Peças versáteis: denim de qualidade, camisas de linho, parkas bem cortadas. Camadas e detalhes utilitários que contam histórias.",accessories:"Bolsas transversais de couro envelhecido, botas robustas com história, relógios clássicos. Pulseiras de viagem e objetos com significado pessoal.",essence:["Livre","Curioso","Autêntico","Aventureiro","Independente"]},
+  SAB:{name:"O Sábio",title:"Verdade, conhecimento e profundidade",description:"Você pensa antes de falar, e quando fala, vale a pena ouvir. O Sábio tem uma necessidade genuína de compreender as coisas em profundidade — não se contenta com respostas superficiais. Você é a pessoa para quem todos recorrem quando precisam de uma perspectiva honesta e bem fundamentada.",colors:[{name:"Azul Marinho",hex:"#1B3A5C"},{name:"Cinza Ardósia",hex:"#6B7B8D"},{name:"Bordô",hex:"#722F37"},{name:"Verde Garrafa",hex:"#2D4A2D"},{name:"Bege Intelectual",hex:"#C9B99A"}],colorsText:"Cores profundas e atemporais que transmitem credibilidade, inteligência e sofisticação natural.",style:"Clássico e refinado sem ser rígido. Alfaiataria impecável, peças atemporais. Tecidos nobres como lã penteada, tweed e algodão egípcio.",accessories:"Óculos de armação clássica. Relógio sofisticado e discreto. Pasta ou bolsa de couro de qualidade. Caneta de qualidade.",essence:["Criterioso","Profundo","Confiável","Reflexivo","Íntegro"]},
+  HER:{name:"O Herói",title:"Coragem, conquista e superação",description:"Você não escolheu os desafios — mas quando eles aparecem, algo em você acende. O Herói tem uma relação íntima com a superação: não porque gosta de sofrer, mas porque sabe que é nos momentos difíceis que descobrimos quem realmente somos. Você inspira pelo exemplo e pela recusa em desistir.",colors:[{name:"Preto",hex:"#1A1A1A"},{name:"Vinho",hex:"#6B2737"},{name:"Chumbo",hex:"#3A3A4A"},{name:"Azul Royal",hex:"#1A3A7A"},{name:"Dourado Forte",hex:"#C9A030"}],colorsText:"Cores de impacto e autoridade que comunicam força, presença e determinação sem palavras.",style:"Poderoso e bem estruturado. Caimento impecável, alfaiataria moderna. Peças que transmitem presença antes de você abrir a boca.",accessories:"Relógio clássico que dura décadas. Cinto de couro genuíno. Sapatos de couro polido. Detalhes metálicos discretos.",essence:["Corajoso","Determinado","Inspirador","Resiliente","Poderoso"]},
+  REV:{name:"O Rebelde",title:"Ruptura, autenticidade e transformação",description:"Você sempre soube que havia algo maior por trás das regras estabelecidas — e nunca teve muito interesse em segui-las só por seguir. O Rebelde é o catalisador da mudança necessária. Você tem um radar apurado para a hipocrisia e uma coragem rara de dizer o que todos pensam em silêncio.",colors:[{name:"Preto Intenso",hex:"#0D0D0D"},{name:"Vermelho Sangue",hex:"#8B0000"},{name:"Roxo Escuro",hex:"#3D1A5C"},{name:"Prata",hex:"#9A9A9A"},{name:"Grafite",hex:"#2D2D2D"}],colorsText:"Cores de contraste e profundidade que comunicam autenticidade radical e presença inquestionável.",style:"Disruptivo e marcante. Mix de texturas inesperadas — couro com seda, estruturado com fluido. Vintage ressignificado com inteligência.",accessories:"Joias com atitude. Botas de couro com história. Peças únicas garimpadas. Nada genérico.",essence:["Autêntico","Corajoso","Disruptivo","Transformador","Livre"]},
+  MAG:{name:"O Mago",title:"Visão, transformação e poder sutil",description:"Você tem uma capacidade quase desconcertante de enxergar o que ainda não existe — e de torná-lo real. O Mago opera nas interseções entre o visível e o invisível. Você transforma ambientes, muda conversas e altera trajetórias simplesmente pela sua presença e visão.",colors:[{name:"Roxo Profundo",hex:"#2D1B4E"},{name:"Azul Petróleo",hex:"#1A3A4A"},{name:"Preto",hex:"#0A0A0A"},{name:"Dourado",hex:"#C9A96E"},{name:"Esmeralda",hex:"#1A5C3A"}],colorsText:"Cores com profundidade e mistério que emanam magnetismo e inteligência que não precisa se anunciar.",style:"Misterioso e magnético. Tecidos com brilho sutil: veludo, cetim fosco, seda texturizada. Nunca óbvio, sempre memorável.",accessories:"Joias com pedras semipreciosas profundas. Perfume marcante e reconhecível. Detalhes metálicos em ouro velho ou bronze.",essence:["Visionário","Magnético","Transformador","Misterioso","Poderoso"]},
+  COM:{name:"O Comum",title:"Pertencimento, conexão e genuinidade",description:"Você tem um dom raro na era da performance: a capacidade de ser completamente real. O Homem Comum não tenta impressionar — e é exatamente por isso que impressiona. Você cria conexões verdadeiras onde outros criam audiências. Seu superpoder é a confiabilidade.",colors:[{name:"Azul Marinho",hex:"#1B3A5C"},{name:"Cinza Médio",hex:"#7A7A7A"},{name:"Branco Off",hex:"#F5F0E8"},{name:"Bege",hex:"#C9B99A"},{name:"Verde Salva",hex:"#7A9A7A"}],colorsText:"Cores acessíveis e equilibradas que transmitem confiança, genuinidade e presença que não precisa se provar.",style:"Acessível e autêntico com apuro discreto. Jeans de qualidade, camisas bem cortadas. Conforto com elegância.",accessories:"Relógio simples e de qualidade. Tênis brancos bem cuidados. Bolsa ou mochila funcional. Nada que grite — tudo que dure.",essence:["Genuíno","Confiável","Acessível","Estável","Conectado"]},
+  AMA:{name:"O Amante",title:"Paixão, beleza e conexão profunda",description:"Você sente o mundo com uma intensidade que poucos compreendem. Para o Amante, tudo tem textura, temperatura e significado. Você tem uma capacidade extraordinária de criar intimidade genuína: as pessoas sentem que quando estão com você, estão realmente sendo vistas.",colors:[{name:"Borgonha",hex:"#722F37"},{name:"Rosa Antigo",hex:"#C9927A"},{name:"Nude Quente",hex:"#D4A889"},{name:"Dourado",hex:"#C9A96E"},{name:"Terracota",hex:"#C26B4A"}],colorsText:"Tons quentes e sensuais que comunicam profundidade emocional e beleza refinada.",style:"Sensível e envolvente. Tecidos que comunicam ao toque: veludo, seda, cashmere. Elegância que sugere mais do que mostra.",accessories:"Perfume marcante e único. Joias com pedras quentes: âmbar, citrino, granada. Lenços de seda, bolsas em couro macio.",essence:["Apaixonado","Sensível","Magnético","Profundo","Belo"]},
+  BOB:{name:"O Bobo da Corte",title:"Alegria, leveza e sabedoria disfarçada",description:"Atrás do sorriso fácil e da gargalhada genuína existe uma inteligência afiada que poucos percebem. O Bobo da Corte era o único que podia dizer a verdade ao rei sem perder a cabeça. Você consegue abordar temas sérios com uma leveza que desarma defensas e abre portas.",colors:[{name:"Mostarda",hex:"#C9A030"},{name:"Laranja Vibrante",hex:"#E8772A"},{name:"Verde Limão",hex:"#8BBF3A"},{name:"Turquesa",hex:"#3AAABF"},{name:"Coral",hex:"#E87A5A"}],colorsText:"Cores vibrantes e expressivas que comunicam vitalidade, espontaneidade e energia contagiante.",style:"Lúdico e expressivo com inteligência. Cores ousadas, estampas que contam histórias. Não tem medo de ser visto — tem medo de ser esquecido.",accessories:"Óculos de armação colorida. Tênis com personalidade. Bijuterias grandes que iniciam conversas.",essence:["Alegre","Espontâneo","Memorável","Inteligente","Livre"]},
+  CUI:{name:"O Cuidador",title:"Proteção, generosidade e presença",description:"Você sente o que os outros precisam antes que eles peçam. O Cuidador tem uma empatia natural que vai além da simpatia. Sua presença tem um efeito calmante: as pessoas se sentem seguras perto de você. Lembre-se: cuidar de si mesmo não é egoísmo.",colors:[{name:"Verde Sálvia",hex:"#7A9A7A"},{name:"Azul Bebê",hex:"#A3C4D4"},{name:"Quartzo Rosa",hex:"#E8C4B8"},{name:"Bege Quente",hex:"#D4C4A8"},{name:"Lavanda",hex:"#B8A8C9"}],colorsText:"Tons suaves e acolhedores que comunicam segurança, calor humano e presença que abraça.",style:"Acolhedor e cuidado. Tecidos macios: malhas finas, algodão, flanela suave. Elegância que convida ao abraço.",accessories:"Lenços e xales suaves. Bolsa espaçosa. Sapatos confortáveis de qualidade. Joias com significado emocional.",essence:["Caloroso","Generoso","Protetor","Presente","Empático"]},
+  CRI:{name:"O Criador",title:"Expressão, originalidade e visão estética",description:"Você não consegue ver o mundo como ele é sem imaginar como ele poderia ser. O Criador tem uma necessidade fundamental de expressão: transformar o interno em algo externo, o invisível em visível. Você tem um senso estético apurado que se manifesta em tudo.",colors:[{name:"Terracota",hex:"#C26B4A"},{name:"Off-white",hex:"#F0EAD6"},{name:"Azul Petróleo",hex:"#1A3A4A"},{name:"Verde Musgo",hex:"#4A5C2A"},{name:"Dourado Fosco",hex:"#B8944A"}],colorsText:"Uma paleta orgânica e rica — cores com história e personalidade.",style:"Único e expressivo com coerência estética. Peças autorais, texturas inesperadas, modelagens assimétricas.",accessories:"Peças artesanais únicas, joias de ateliê ou garimpo. Óculos com personalidade forte.",essence:["Original","Expressivo","Visionário","Estético","Autêntico"]},
+  GOV:{name:"O Governante",title:"Poder, responsabilidade e legado",description:"Você não busca poder pelo status — busca porque tem clareza de que pode fazer algo útil com ele. O Governante tem uma visão de longo prazo que poucos conseguem sustentar. Você assume responsabilidades que outros evitam e carrega o peso das decisões sem se queixar.",colors:[{name:"Marinho Profundo",hex:"#0D1F3C"},{name:"Preto",hex:"#0A0A0A"},{name:"Branco Puro",hex:"#F5F5F0"},{name:"Dourado",hex:"#C9A96E"},{name:"Bordô",hex:"#5C1A2A"}],colorsText:"Cores de autoridade absoluta e sofisticação atemporal que comunicam poder sem ostentação.",style:"Impecável e autoritário. Alfaiataria de alta qualidade. O Governante veste o papel antes de entrar na sala.",accessories:"Relógio de luxo discreto. Sapatos de couro excepcional. Caneta de metal. Portfolio de couro.",essence:["Poderoso","Responsável","Confiável","Visionário","Íntegro"]}
+};
+
+let currentQuestion=0, answers={}, scores={INO:0,EXP:0,SAB:0,HER:0,REV:0,MAG:0,COM:0,AMA:0,BOB:0,CUI:0,CRI:0,GOV:0};
+
+function showScreen(id,scrollTop=true){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');if(scrollTop)window.scrollTo(0,0);}
+
+function checkPassword(){
+  const val=document.getElementById('pwd-input').value.trim();
+  const err=document.getElementById('pwd-error');
+  if(val.toUpperCase()===SENHA_CORRETA.toUpperCase()){err.style.display='none';initTest();showScreen('test-screen',true);}
+  else{err.style.display='block';document.getElementById('pwd-input').value='';}
+}
+
+function initTest(){
+  const container=document.getElementById('questions-container');
+  container.innerHTML='';
+  questions.forEach((q,i)=>{
+    const block=document.createElement('div');
+    block.className='question-block'+(i===0?' active':'');
+    block.id='q-'+i;
+    block.innerHTML=`<span class="question-number">Pergunta ${i+1} de ${questions.length}</span><p class="question-text">${q.text}</p><div class="options">${q.options.map((opt,j)=>`<div class="option" onclick="selectOption(${i},${j})" id="opt-${i}-${j}"><span class="option-letter">${opt.letter}</span><span class="option-text">${opt.text}</span></div>`).join('')}</div>`;
+    container.appendChild(block);
+  });
+  updateProgress();updateNavButtons();
+}
+
+function selectOption(qIndex,optIndex){
+  document.querySelectorAll(`#q-${qIndex} .option`).forEach(o=>o.classList.remove('selected'));
+  document.getElementById(`opt-${qIndex}-${optIndex}`).classList.add('selected');
+  answers[qIndex]=optIndex;
+  updateNavButtons();
+}
+
+function nextQuestion(){
+  if(answers[currentQuestion]===undefined)return;
+  if(currentQuestion<questions.length-1){
+    document.getElementById('q-'+currentQuestion).classList.remove('active');
+    currentQuestion++;
+    document.getElementById('q-'+currentQuestion).classList.add('active');
+    updateProgress();updateNavButtons();
+    document.querySelector('.progress-bar-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+
+function prevQuestion(){
+  if(currentQuestion>0){
+    document.getElementById('q-'+currentQuestion).classList.remove('active');
+    currentQuestion--;
+    document.getElementById('q-'+currentQuestion).classList.add('active');
+    updateProgress();updateNavButtons();
+    document.querySelector('.progress-bar-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+
+function updateProgress(){
+  const pct=((currentQuestion+1)/questions.length*100).toFixed(1);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-text').textContent=(currentQuestion+1)+' / '+questions.length;
+}
+
+function updateNavButtons(){
+  const prev=document.getElementById('btn-prev');
+  const next=document.getElementById('btn-next');
+  const submit=document.getElementById('btn-submit');
+  prev.disabled=currentQuestion===0;
+  const isLast=currentQuestion===questions.length-1;
+  next.style.display=isLast?'none':'inline-block';
+  submit.style.display=isLast?'inline-block':'none';
+  if(!isLast)next.disabled=answers[currentQuestion]===undefined;
+}
+
+function submitTest(){
+  if(answers[currentQuestion]===undefined)return;
+  Object.keys(scores).forEach(k=>scores[k]=0);
+  questions.forEach((q,i)=>{if(answers[i]!==undefined)scores[q.options[answers[i]].archetype]++;});
+  const winner=Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+  showResult(winner);
+}
+
+function showResult(key){
+  const data=archetypes[key];
+  document.getElementById('result-name').textContent=data.name;
+  document.getElementById('result-title').textContent=data.title;
+  document.getElementById('result-description').textContent=data.description;
+  document.getElementById('result-colors').innerHTML=data.colors.map(c=>`<div class="color-chip"><div class="color-swatch" style="background:${c.hex}"></div><span class="color-name">${c.name}</span></div>`).join('');
+  document.getElementById('result-colors-text').textContent=data.colorsText;
+  document.getElementById('result-style').textContent=data.style;
+  document.getElementById('result-accessories').textContent=data.accessories;
+  document.getElementById('result-essence').innerHTML=data.essence.map(e=>`<span class="essence-tag">${e}</span>`).join('');
+  showScreen('result-screen',true);
+}
+</script>
+</body>
+</html>
